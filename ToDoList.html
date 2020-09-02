@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lexend+Peta&display=swap"
+      rel="stylesheet"
+    />
+    <title>ToDo List</title>
+    <style>
+      :root {
+        --font-family: "Lexend Peta", sans-serif;
+      }
+      html {
+        box-sizing: border-box;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: inherit;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: var(--font-family);
+        line-height: 2;
+        background-color: black;
+      }
+
+      .container {
+        margin: 0 auto;
+        padding-left: 100px;
+        padding-right: 100px;
+        color: #333;
+        height: 90vh;
+        margin-top: 5vh;
+        margin-bottom: 5vh;
+        border: 1px solid black;
+        overflow-y: auto;
+        border-radius: 5px;
+        background: url("toDoList.jpeg") no-repeat center center/cover;
+      }
+
+      .title {
+        text-align: center;
+        margin-bottom: 10px;
+        font-size: 70px;
+        opacity: 0.5;
+      }
+
+      .list {
+        list-style: none;
+        margin-bottom: 20px;
+      }
+
+      .item {
+        margin-bottom: 30px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      li {
+        margin: 20px;
+      }
+      .item span {
+        flex-grow: 1;
+        margin: 0px 10px;
+        font-size: 22px;
+      }
+      .item span:hover {
+        cursor: pointer;
+      }
+      li span{
+        padding:10px;
+      }
+      .marked span {
+        text-decoration: line-through;
+      }
+
+      .delete {
+        border: 1px solid black;
+        border-radius: 50%;
+        padding: 10px;
+        cursor: pointer;
+        font-family: var(--font-family);
+      }
+
+      form {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        border-radius: 4px;
+        border: 3px solid #333;
+        font-size: 20px;
+        background-color: rgb(228, 224, 21);
+      }
+      .edit,
+      .save {
+        padding: 10px 40px;
+        font-family: var(--font-family);
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <div class="container">
+        <h1 class="title">ToDo list</h1>
+        <ul class="list"></ul>
+        <form class="form">
+          <input
+            autofocus
+            type="text"
+            placeholder="Add here Item and click Enter"
+            class="input"
+          />
+        </form>
+      </div>
+    </div>
+    <script>
+      let toDoListArr = [];
+
+      const inputAdd = document.querySelector(".form");
+
+      //listen to submit event in input  call to add the item to array
+      inputAdd.addEventListener("submit", (event) => {
+        //adding eventlistener to listen to Enter key,stop the form from being submitted, you call the preventDefault() method inside the submit event listener
+        event.preventDefault();
+        const input = document.querySelector(".input");
+
+        if (input.value !== "") {
+          //checking if inserted value is empty, if empty it wont add it
+          addToDoListItems(input.value); //call function to add to list items
+          input.value = "";
+          input.focus();
+        }
+      });
+      //adds item to array and makes call to show list 
+      function addToDoListItems(itemText) {
+        const item = {
+          //create object
+          text: itemText, //key- text is unique-same item to toDolist shouldnt be added
+          checked: false,
+          createdAt: new Date(),
+        };
+        toDoListArr.push(item); //add item to array which contains objects
+        
+        showItemInTodoList(item); //show on list the new added item
+      }
+
+      function showItemInTodoList(itemText) {
+        //adding items to local storage  from array which was converted to json string
+        localStorage.setItem("toDoListArrRef", JSON.stringify(toDoListArr));
+
+        const list = document.querySelector(".list");
+        const item = document.querySelector(`[data-key='${itemText.text}']`);//The key is the text
+
+        const isChecked = itemText.checked ? "marked" : ""; //future to put line on checked task for now always be false
+
+        const li = document.createElement("li");
+        li.setAttribute("class", `itemText ${isChecked}`);//future to put line on checked task for now always ""
+        li.setAttribute("data-key", itemText.text);
+        li.innerHTML = `
+        <input type="checkbox">
+        <span>${itemText.text}</span>
+        <span>[${itemText.createdAt.toLocaleString("en-US")}]</span>
+        <button class="delete" onclick="deleteItem(this)">X</button>
+        <button class="edit"   onclick="editItem(this)">Edit</button>
+        <button class="save"   onclick="saveItem(this)">save</button></br><hr>`;
+
+        if (item) {
+          list.replaceChild(li, item); ///if text to do identical
+        } else {
+          list.append(li);
+        }
+      }
+
+      function saveItem(item) {
+
+        const dataKey = item.parentElement.getAttribute("data-key");
+        const aIndex = toDoListArr.findIndex((i) => i.text === dataKey);
+        // console.log("Index:"+aIndex);to check added right to local storage
+        const input = item.parentElement.innerText;
+        let itemText = input.split("[");
+        toDoListArr[aIndex].text = itemText[0];
+        console.log(new Date());
+        toDoListArr[aIndex].createdAt = new Date().toLocaleString("en-US");
+
+        document.activeElement.blur();
+        // showItemInTodoList(item);
+        location.reload();
+        localStorage.setItem("toDoListArrRef", JSON.stringify(toDoListArr));
+        alert("Item Saved and added to ToDo list");
+      }
+
+      function editItem(item) {
+        
+        item.parentElement.querySelector("span").setAttribute("contentEditable", true);//tikun bug -not add date-done
+        item.parentElement.querySelector("span").focus();
+        item.parentElement.querySelector("span").select();
+
+        if (item.parentElement.getAttribute("data-key") !== "") {
+          let dataKey = item.parentElement.getAttribute("data-key");
+          let aIndex = toDoListArr.findIndex((i) => i.text === dataKey);
+        }
+        alert("You can edited, the ToDo list by clicking with mouse on text");
+      }
+
+      function deleteItem(item) {
+        const dataKey = item.parentElement.getAttribute("data-key");
+        const aIndex = toDoListArr.findIndex((i) => i.text === dataKey);
+        toDoListArr.splice(aIndex, 1);
+        item.parentElement.remove();
+
+        //remove from local storage
+        localStorage.setItem("toDoListArrRef", JSON.stringify(toDoListArr));
+        alert("Item deleted from ToDo list");
+      }
+      //when dom loaded after f5 each item from local storage is taken and json.parse convert json string to object back from json.stringify and show in list
+      document.addEventListener("DOMContentLoaded", () => {
+        const ref = localStorage.getItem("toDoListArrRef");
+        if (ref) {
+          toDoListArr = JSON.parse(ref);
+          toDoListArr.forEach((t) => {
+            showItemInTodoList(t);
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
